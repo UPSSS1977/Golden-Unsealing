@@ -97,23 +97,17 @@ downloadBtn.addEventListener("click", () => {
   img.crossOrigin = "anonymous";
   img.src = uploadedImg.src;
   img.onload = () => {
-    // Calculate scale to fit canvas
-    const editor = document.getElementById("editor");
-    const editorWidth = editor.offsetWidth;
-    const editorHeight = editor.offsetHeight;
-
-    // Determine the ratio between editor and canvas
-    const scaleRatioX = canvas.width / editorWidth;
-    const scaleRatioY = canvas.height / editorHeight;
-
+    // Use same transform values from preview
     ctx.save();
-    // Apply proportional translation, rotation, and scale
-    ctx.translate(
-      canvas.width / 2 + translateX * scaleRatioX,
-      canvas.height / 2 + translateY * scaleRatioY
-    );
+    ctx.translate(canvas.width / 2 + (translateX / editor.offsetWidth) * canvas.width,
+                  canvas.height / 2 + (translateY / editor.offsetHeight) * canvas.height);
     ctx.rotate(rotation * Math.PI / 180);
-    ctx.scale(scale * scaleRatioX, scale * scaleRatioY);
+
+    // Scale proportionally
+    const scaleFactor = (canvas.width / editor.offsetWidth) * scale;
+    ctx.scale(scaleFactor, scaleFactor);
+
+    // Center the uploaded image
     ctx.drawImage(img, -img.width / 2, -img.height / 2);
     ctx.restore();
 
