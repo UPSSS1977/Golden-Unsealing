@@ -2,94 +2,119 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Image Frame Editor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Frame Editor</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 0;
-      background: #f0f0f0;
-      overflow: hidden;
-    }
-
-    .toolbar {
-      padding: 10px;
-      background: #fff;
       display: flex;
+      flex-direction: column;
+      align-items: center;
       justify-content: center;
-      gap: 10px;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      border-bottom: 1px solid #ccc;
+      height: 100vh;
+      margin: 0;
+      background: #f4f4f4;
+      overflow: hidden;
     }
 
     #editor {
       position: relative;
-      margin: 20px auto;
-      width: 1080px;
-      height: 1080px;
-      background: #ddd;
+      width: 90vmin;
+      height: 90vmin;
+      background: white;
+      border: 2px solid #ccc;
       overflow: hidden;
-      border: 2px solid #333;
-      touch-action: none; /* prevent browser scrolling on touch */
+      touch-action: none; /* important for mobile drag/zoom */
     }
 
     #img-container {
       position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       cursor: grab;
-      touch-action: none;
+      touch-action: none; /* stops browser gestures */
     }
 
     #uploaded-img {
-      max-width: none;
-      max-height: none;
       display: none;
+      max-width: 100%;
+      max-height: 100%;
       pointer-events: none;
+      user-select: none;
     }
 
     #frame-img {
       position: absolute;
       top: 0;
       left: 0;
-      width: 1080px;
-      height: 1080px;
+      width: 100%;
+      height: 100%;
       pointer-events: none;
     }
 
-    .templates {
+    .controls {
+      margin-top: 15px;
       display: flex;
+      flex-wrap: wrap;
       justify-content: center;
-      margin-top: 10px;
       gap: 10px;
     }
 
-    .template {
-      width: 100px;
-      height: 100px;
+    button, input[type="file"], input[type="range"] {
+      padding: 8px 12px;
+      font-size: 14px;
+      border-radius: 5px;
+      border: 1px solid #888;
+    }
+
+    button {
       cursor: pointer;
+      background: #007bff;
+      color: white;
+      border: none;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    .templates {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .template {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
       border: 2px solid transparent;
+      cursor: pointer;
     }
 
     .template:hover {
-      border: 2px solid #333;
+      border-color: #007bff;
     }
   </style>
 </head>
 <body>
-  <div class="toolbar">
-    <input type="file" id="upload" accept="image/*">
-    <input type="range" id="zoom" value="1" step="0.01">
-    <button id="rotate-btn">Rotate</button>
-    <button id="download-btn">Download</button>
-  </div>
+  <h2>📸 Frame Editor</h2>
 
   <div id="editor">
     <div id="img-container">
-      <img id="uploaded-img" src="">
+      <img id="uploaded-img" alt="Upload Preview">
     </div>
-    <img id="frame-img" src="">
+    <img id="frame-img" alt="Frame">
+  </div>
+
+  <div class="controls">
+    <input type="file" id="upload" accept="image/*">
+    <input type="range" id="zoom" min="0.01" max="10" step="0.01" value="1">
+    <button id="rotate-btn">🔄 Rotate</button>
+    <button id="download-btn">💾 Download</button>
   </div>
 
   <div class="templates">
