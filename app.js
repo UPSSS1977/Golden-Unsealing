@@ -7,8 +7,7 @@ const rotateBtn = document.getElementById("rotate-btn");
 const downloadBtn = document.getElementById("download-btn");
 
 let scale = 1, rotation = 0, translateX = 0, translateY = 0;
-let isDragging = false, lastX, lastY;
-let lastDist = 0;
+let isDragging = false, lastX, lastY, lastDist = 0;
 
 // Update transform
 function updateTransform() {
@@ -27,7 +26,7 @@ upload.addEventListener("change", e => {
     uploadedImg.onload = () => {
       const editorSize = document.getElementById("editor").offsetWidth;
       const maxDim = Math.max(uploadedImg.naturalWidth, uploadedImg.naturalHeight);
-      scale = (editorSize / maxDim) * 0.8; // fit inside editor
+      scale = (editorSize / maxDim) * 0.8;
       updateTransform();
     };
   };
@@ -39,40 +38,40 @@ function selectTemplate(src) { frameImg.src = src; }
 window.selectTemplate = selectTemplate;
 
 // Rotate
-rotateBtn.addEventListener("click", ()=>{ rotation=(rotation+90)%360; updateTransform(); });
+rotateBtn.addEventListener("click", ()=>{ rotation = (rotation + 90) % 360; updateTransform(); });
 
 // Zoom slider
-zoomSlider.addEventListener("input", e => { scale *= parseFloat(e.target.value); zoomSlider.value=1; updateTransform(); });
+zoomSlider.addEventListener("input", e => { scale *= parseFloat(e.target.value); zoomSlider.value = 1; updateTransform(); });
 
 // Mouse wheel zoom
 document.getElementById("editor").addEventListener("wheel", e => {
   e.preventDefault();
   scale += e.deltaY * -0.001;
-  if(scale<0.01) scale=0.01;
+  if (scale < 0.01) scale = 0.01;
   updateTransform();
 }, {passive:false});
 
 // Desktop drag
-imgContainer.addEventListener("mousedown", e => { isDragging=true; lastX=e.clientX; lastY=e.clientY; e.preventDefault(); });
-window.addEventListener("mousemove", e => { if(!isDragging) return; translateX += e.clientX-lastX; translateY += e.clientY-lastY; lastX=e.clientX; lastY=e.clientY; updateTransform(); });
-window.addEventListener("mouseup", ()=>isDragging=false);
+imgContainer.addEventListener("mousedown", e => { isDragging = true; lastX = e.clientX; lastY = e.clientY; e.preventDefault(); });
+window.addEventListener("mousemove", e => { if(!isDragging) return; translateX += e.clientX - lastX; translateY += e.clientY - lastY; lastX = e.clientX; lastY = e.clientY; updateTransform(); });
+window.addEventListener("mouseup", ()=>isDragging = false);
 
 // Mobile drag & pinch
 imgContainer.addEventListener("touchstart", e => {
-  if(e.touches.length===1){ isDragging=true; lastX=e.touches[0].clientX; lastY=e.touches[0].clientY; }
-  if(e.touches.length===2){ lastDist = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY); }
+  if(e.touches.length === 1){ isDragging = true; lastX = e.touches[0].clientX; lastY = e.touches[0].clientY; }
+  if(e.touches.length === 2){ lastDist = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY); }
 }, {passive:false});
 
 imgContainer.addEventListener("touchmove", e => {
   e.preventDefault();
-  if(e.touches.length===1 && isDragging){
-    translateX += e.touches[0].clientX-lastX;
-    translateY += e.touches[0].clientY-lastY;
+  if(e.touches.length === 1 && isDragging){
+    translateX += e.touches[0].clientX - lastX;
+    translateY += e.touches[0].clientY - lastY;
     lastX = e.touches[0].clientX;
     lastY = e.touches[0].clientY;
     updateTransform();
-  } else if(e.touches.length===2){
-    const dist = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+  } else if(e.touches.length === 2){
+    const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
     const zoomFactor = dist / lastDist;
     scale *= zoomFactor;
     lastDist = dist;
@@ -80,18 +79,21 @@ imgContainer.addEventListener("touchmove", e => {
   }
 }, {passive:false});
 
-imgContainer.addEventListener("touchend", e => { if(e.touches.length<2) lastDist=0; if(e.touches.length===0) isDragging=false; });
+imgContainer.addEventListener("touchend", e => {
+  if(e.touches.length < 2) lastDist = 0;
+  if(e.touches.length === 0) isDragging = false;
+});
 
 // Download
 downloadBtn.addEventListener("click", () => {
-  const canvas=document.createElement("canvas");
-  canvas.width=1080; canvas.height=1080;
-  const ctx=canvas.getContext("2d");
+  const canvas = document.createElement("canvas");
+  canvas.width = 1080; canvas.height = 1080;
+  const ctx = canvas.getContext("2d");
 
   if(uploadedImg.src){
-    const img=new Image();
-    img.crossOrigin="anonymous"; img.src=uploadedImg.src;
-    img.onload=()=>{
+    const img = new Image();
+    img.crossOrigin = "anonymous"; img.src = uploadedImg.src;
+    img.onload = () => {
       ctx.save();
       ctx.translate(canvas.width/2 + translateX, canvas.height/2 + translateY);
       ctx.rotate(rotation*Math.PI/180);
@@ -100,13 +102,13 @@ downloadBtn.addEventListener("click", () => {
       ctx.restore();
 
       if(frameImg.src){
-        const frame=new Image();
-        frame.crossOrigin="anonymous"; frame.src=frameImg.src;
-        frame.onload=()=>{
-          ctx.drawImage(frame,0,0,canvas.width,canvas.height);
-          const link=document.createElement("a");
-          link.download="framed-image.png";
-          link.href=canvas.toDataURL("image/png");
+        const frame = new Image();
+        frame.crossOrigin = "anonymous"; frame.src = frameImg.src;
+        frame.onload = () => {
+          ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
+          const link = document.createElement("a");
+          link.download = "framed-image.png";
+          link.href = canvas.toDataURL("image/png");
           link.click();
         };
       }
