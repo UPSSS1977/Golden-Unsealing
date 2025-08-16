@@ -1,36 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Frame Editor</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Image Frame Editor</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: sans-serif;
+      background: #f0f0f0;
+    }
+    #editor {
+      position: relative;
+      width: 1080px;
+      height: 1080px;
+      border: 2px solid #000;
+      background: #fff;
+      overflow: hidden;
+      touch-action: none; /* prevent page scrolling on mobile */
+    }
+    #uploadedImg {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      transform-origin: center center;
+      max-width: none;
+      max-height: none;
+      display: none;
+      cursor: grab;
+    }
+    #frameImg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    input[type="range"] {
+      width: 200px;
+    }
+  </style>
 </head>
 <body>
-  <h2>Frame Editor</h2>
-  <input type="file" id="upload" accept="image/*"><br><br>
+  <h2>Image Frame Editor</h2>
 
   <div id="editor">
-    <canvas id="canvas" width="1080" height="1080"></canvas>
+    <img id="uploadedImg" />
+    <img id="frameImg" src="frames/rumi.png" />
   </div>
 
   <div class="controls">
-    <button onclick="rotate(-90)">⟲ Rotate Left</button>
-    <button onclick="rotate(90)">⟳ Rotate Right</button>
+    <input type="file" id="upload" accept="image/*">
+    <input type="range" id="zoom" min="0.01" max="10" step="0.01" value="1">
+    <button id="rotateBtn">Rotate</button>
     <button id="downloadBtn">Download</button>
   </div>
 
-  <h3>Select Frame:</h3>
-  <div id="templates">
-    <img src="frames/rumi.png" class="template" onclick="selectTemplate('frames/rumi.png')">
-    <img src="frames/mira.png" class="template" onclick="selectTemplate('frames/mira.png')">
-    <img src="frames/zoey.png" class="template" onclick="selectTemplate('frames/zoey.png')">
-    <img src="frames/jinu.png" class="template" onclick="selectTemplate('frames/jinu.png')">
-  </div>
-
-  <script src="app.js"></script>
-</body>
-</html>
   <script src="app.js"></script>
 </body>
 </html>
