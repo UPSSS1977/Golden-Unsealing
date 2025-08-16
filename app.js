@@ -153,32 +153,34 @@ downloadBtn.addEventListener("click", () => {
 
   if (uploadedImg.src) {
     const img = new Image();
+    img.crossOrigin = "anonymous"; // fix tainted canvas if needed
     img.src = uploadedImg.src;
     img.onload = () => {
       ctx.save();
-      ctx.translate(540 + posX, 540 + posY);
+
+      // Apply transforms like in preview
+      ctx.translate(canvas.width / 2 + translateX, canvas.height / 2 + translateY);
+      ctx.rotate((rotation * Math.PI) / 180);
       ctx.scale(scale, scale);
-      ctx.rotate(rotation * Math.PI / 180);
+
+      // Draw uploaded image centered
       ctx.drawImage(img, -img.width / 2, -img.height / 2);
+
       ctx.restore();
 
-      if (frameImg.src) {
-        const frame = new Image();
-        frame.src = frameImg.src;
-        frame.onload = () => {
-          ctx.drawImage(frame, 0, 0, 1080, 1080);
-          triggerDownload(canvas);
-        };
-      } else {
-        triggerDownload(canvas);
-      }
+      // Draw frame on top
+      const frame = new Image();
+      frame.crossOrigin = "anonymous";
+      frame.src = frameImg.src;
+      frame.onload = () => {
+        ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
+
+        // Download
+        const link = document.createElement("a");
+        link.download = "framed-image.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      };
     };
   }
 });
-
-function triggerDownload(canvas) {
-  const link = document.createElement("a");
-  link.download = "framed-image.png";
-  link.href = canvas.toDataURL();
-  link.click();
-}
