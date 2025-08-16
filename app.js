@@ -87,31 +87,48 @@ imgContainer.addEventListener("touchend", e => {
 // Download
 downloadBtn.addEventListener("click", () => {
   const canvas = document.createElement("canvas");
-  canvas.width = 1080; canvas.height = 1080;
+  canvas.width = 1080;
+  canvas.height = 1080;
   const ctx = canvas.getContext("2d");
 
-  if(uploadedImg.src){
-    const img = new Image();
-    img.crossOrigin = "anonymous"; img.src = uploadedImg.src;
-    img.onload = () => {
-      ctx.save();
-      ctx.translate(canvas.width/2 + translateX, canvas.height/2 + translateY);
-      ctx.rotate(rotation*Math.PI/180);
-      ctx.scale(scale, scale);
-      ctx.drawImage(img, -img.width/2, -img.height/2);
-      ctx.restore();
+  if (!uploadedImg.src) return;
 
-      if(frameImg.src){
-        const frame = new Image();
-        frame.crossOrigin = "anonymous"; frame.src = frameImg.src;
-        frame.onload = () => {
-          ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
-          const link = document.createElement("a");
-          link.download = "framed-image.png";
-          link.href = canvas.toDataURL("image/png");
-          link.click();
-        };
-      }
-    };
-  }
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.src = uploadedImg.src;
+  img.onload = () => {
+    // Calculate scale to fit canvas
+    const editor = document.getElementById("editor");
+    const editorWidth = editor.offsetWidth;
+    const editorHeight = editor.offsetHeight;
+
+    // Determine the ratio between editor and canvas
+    const scaleRatioX = canvas.width / editorWidth;
+    const scaleRatioY = canvas.height / editorHeight;
+
+    ctx.save();
+    // Apply proportional translation, rotation, and scale
+    ctx.translate(
+      canvas.width / 2 + translateX * scaleRatioX,
+      canvas.height / 2 + translateY * scaleRatioY
+    );
+    ctx.rotate(rotation * Math.PI / 180);
+    ctx.scale(scale * scaleRatioX, scale * scaleRatioY);
+    ctx.drawImage(img, -img.width / 2, -img.height / 2);
+    ctx.restore();
+
+    // Draw frame on top
+    if (frameImg.src) {
+      const frame = new Image();
+      frame.crossOrigin = "anonymous";
+      frame.src = frameImg.src;
+      frame.onload = () => {
+        ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
+        const link = document.createElement("a");
+        link.download = "framed-image.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      };
+    }
+  };
 });
