@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Frame Editor</title>
   <style>
     body {
@@ -11,10 +11,8 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
       margin: 0;
       background: #f4f4f4;
-      overflow: hidden;
     }
 
     #editor {
@@ -24,7 +22,7 @@
       background: white;
       border: 2px solid #ccc;
       overflow: hidden;
-      touch-action: none;
+      touch-action: none; /* mobile drag/zoom */
     }
 
     #img-container {
@@ -38,10 +36,10 @@
 
     #uploaded-img {
       display: none;
+      max-width: none;
+      max-height: none;
       pointer-events: none;
       user-select: none;
-      max-width: 100%;
-      max-height: 100%;
     }
 
     #frame-img {
@@ -112,7 +110,7 @@
 
   <div class="controls">
     <input type="file" id="upload" accept="image/*">
-    <input type="range" id="zoom" value="1" step="0.01">
+    <input type="range" id="zoom" step="0.01" value="1">
     <button id="rotate-btn">🔄 Rotate</button>
     <button id="download-btn">💾 Download</button>
   </div>
@@ -123,6 +121,10 @@
     <img src="frames/zoey.png" class="template" onclick="selectTemplate('frames/zoey.png')">
     <img src="frames/jinu.png" class="template" onclick="selectTemplate('frames/jinu.png')">
   </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
 
   <script src="app.js"></script>
 </body>
