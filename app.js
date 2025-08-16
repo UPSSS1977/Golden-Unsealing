@@ -1,119 +1,165 @@
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+const upload = document.getElementById("upload");
+const uploadedImg = document.getElementById("uploaded-img");
+const frameImg = document.getElementById("frame-img");
+const templates = document.querySelectorAll(".template");
+const editor = document.getElementById("editor");
+const imgContainer = document.getElementById("img-container");
+const zoomSlider = document.getElementById("zoom-slider");
+const rotateBtn = document.getElementById("rotate-btn");
+const downloadBtn = document.getElementById("download-btn");
 
-let uploadedImg = null;
-let frameImg = new Image();
-
-// transformation values
-let imgX = 0, imgY = 0;
-let imgScale = 1;
+let scale = 1;
+let rotation = 0;
 let isDragging = false;
-let lastX, lastY;
+let startX, startY, initialX, initialY;
 
-// Upload image
-document.getElementById("upload").addEventListener("change", (e) => {
+// ---------- Upload ----------
+upload.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (file) {
     const reader = new FileReader();
     reader.onload = (event) => {
-      uploadedImg = new Image();
-      uploadedImg.onload = () => {
-        // fit initially
-        const scale = Math.min(1080 / uploadedImg.width, 1080 / uploadedImg.height);
-        imgScale = scale;
-        imgX = (1080 - uploadedImg.width * imgScale) / 2;
-        imgY = (1080 - uploadedImg.height * imgScale) / 2;
-        draw();
-      };
       uploadedImg.src = event.target.result;
+      uploadedImg.onload = () => {
+        // auto-fit inside editor (1080x1080)
+        const maxW = 600;
+        const maxH = 600;
+        let w = uploadedImg.naturalWidth;
+        let h = uploadedImg.naturalHeight;
+
+        if (w > maxW || h > maxH) {
+          const ratio = Math.min(maxW / w, maxH / h);
+          w *= ratio;
+          h *= ratio;
+        }
+
+        imgContainer.style.width = w + "px";
+        imgContainer.style.height = h + "px";
+        imgContainer.style.left = (editor.clientWidth - w) / 2 + "px";
+        imgContainer.style.top = (editor.clientHeight - h) / 2 + "px";
+
+        scale = 1;
+        rotation = 0;
+        zoomSlider.value = 1;
+        updateTransform();
+      };
     };
     reader.readAsDataURL(file);
   }
 });
 
-// Select frame
-function selectTemplate(src) {
-  frameImg.src = src;
-  frameImg.onload = draw;
+// ---------- Template selection ----------
+templates.forEach(tpl => {
+  tpl.addEventListener("click", () => {
+    frameImg.src = tpl.src;
+  });
+});
+
+// ---------- Drag (desktop) ----------
+imgContainer.addEventListener("mousedown", (e) => {
+  isDragging = true;
+  startX = e.clientX;
+  startY = e.clientY;
+  initialX = imgContainer.offsetLeft;
+  initialY = imgContainer.offsetTop;
+  e.preventDefault();
+});
+
+document.addEventListener("mousemove", (e) => {
+  if (isDragging) {
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    imgContainer.style.left = initialX + dx + "px";
+    imgContainer.style.top = initialY + dy + "px";
+  }
+});
+
+document.addEventListener("mouseup", () => {
+  isDragging = false;
+});
+
+// ---------- Drag (mobile touch) ----------
+imgContainer.addEventListener("touchstart", (e) => {
+  if (e.touches.length === 1) {
+    isDragging = true;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    initialX = imgContainer.offsetLeft;
+    initialY = imgContainer.offsetTop;
+  }
+});
+
+imgContainer.addEventListener("touchmove", (e) => {
+  if (isDragging && e.touches.length === 1) {
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+    imgContainer.style.left = initialX + dx + "px";
+    imgContainer.style.top = initialY + dy + "px";
+  }
+});
+
+imgContainer.addEventListener("touchend", () => {
+  isDragging = false;
+});
+
+// ---------- Zoom: slider (desktop & mobile) ----------
+zoomSlider.addEventListener("input", () => {
+  scale = parseFloat(zoomSlider.value);
+  updateTransform();
+});
+
+// ---------- Zoom: mouse scroll ----------
+editor.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  scale += e.deltaY * -0.001;
+  if (scale < 0.1) scale = 0.1;
+  if (scale > 5) scale = 5;
+  zoomSlider.value = scale;
+  updateTransform();
+});
+
+// ---------- Rotate ----------
+rotateBtn.addEventListener("click", () => {
+  rotation += 90;
+  updateTransform();
+});
+
+// ---------- Apply transforms ----------
+function updateTransform() {
+  uploadedImg.style.transform = `scale(${scale}) rotate(${rotation}deg)`;
 }
 
-// Draw everything
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+// ---------- Download ----------
+downloadBtn.addEventListener("click", () => {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1080;
+  canvas.height = 1080;
+  const ctx = canvas.getContext("2d");
 
-  if (uploadedImg) {
-    ctx.drawImage(
-      uploadedImg,
-      imgX,
-      imgY,
-      uploadedImg.width * imgScale,
-      uploadedImg.height * imgScale
-    );
+  // Draw uploaded image
+  if (uploadedImg.src) {
+    const rect = imgContainer.getBoundingClientRect();
+    const editorRect = editor.getBoundingClientRect();
+    const x = rect.left - editorRect.left;
+    const y = rect.top - editorRect.top;
+    const w = rect.width;
+    const h = rect.height;
+
+    ctx.save();
+    ctx.translate(x + w / 2, y + h / 2);
+    ctx.rotate((rotation * Math.PI) / 180);
+    ctx.scale(scale, scale);
+    ctx.drawImage(uploadedImg, -w / 2, -h / 2, w, h);
+    ctx.restore();
   }
 
-  if (frameImg) {
+  // Draw frame
+  if (frameImg.src) {
     ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
   }
-}
 
-// Mouse drag events
-canvas.addEventListener("mousedown", (e) => {
-  if (!uploadedImg) return;
-  isDragging = true;
-  lastX = e.clientX;
-  lastY = e.clientY;
-  canvas.style.cursor = "grabbing";
-});
-
-canvas.addEventListener("mousemove", (e) => {
-  if (isDragging && uploadedImg) {
-    const dx = e.clientX - lastX;
-    const dy = e.clientY - lastY;
-    imgX += dx;
-    imgY += dy;
-    lastX = e.clientX;
-    lastY = e.clientY;
-    draw();
-  }
-});
-
-canvas.addEventListener("mouseup", () => {
-  isDragging = false;
-  canvas.style.cursor = "grab";
-});
-
-canvas.addEventListener("mouseleave", () => {
-  isDragging = false;
-  canvas.style.cursor = "grab";
-});
-
-// Zoom with scroll
-canvas.addEventListener("wheel", (e) => {
-  if (!uploadedImg) return;
-  e.preventDefault();
-
-  const zoomFactor = 0.1;
-  const mouseX = e.offsetX;
-  const mouseY = e.offsetY;
-
-  const prevScale = imgScale;
-  if (e.deltaY < 0) {
-    imgScale *= 1 + zoomFactor;
-  } else {
-    imgScale *= 1 - zoomFactor;
-  }
-
-  // adjust position so zoom is centered on mouse
-  imgX -= (mouseX - imgX) * (imgScale / prevScale - 1);
-  imgY -= (mouseY - imgY) * (imgScale / prevScale - 1);
-
-  draw();
-});
-
-// Download final image
-function downloadImage() {
   const link = document.createElement("a");
-  link.download = "framed_image.png";
+  link.download = "framed-image.png";
   link.href = canvas.toDataURL("image/png");
   link.click();
-}
+});
