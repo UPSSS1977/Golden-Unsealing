@@ -4,10 +4,11 @@ const ctx = canvas.getContext("2d");
 let uploadedImg = null;
 let frameImg = new Image();
 
-let imgX = 0, imgY = 0; // position
+// transformation values
+let imgX = 0, imgY = 0;
 let imgScale = 1;
 let isDragging = false;
-let startX, startY;
+let lastX, lastY;
 
 // Upload image
 document.getElementById("upload").addEventListener("change", (e) => {
@@ -17,7 +18,7 @@ document.getElementById("upload").addEventListener("change", (e) => {
     reader.onload = (event) => {
       uploadedImg = new Image();
       uploadedImg.onload = () => {
-        // Fit image initially inside 1080x1080
+        // fit initially
         const scale = Math.min(1080 / uploadedImg.width, 1080 / uploadedImg.height);
         imgScale = scale;
         imgX = (1080 - uploadedImg.width * imgScale) / 2;
@@ -39,6 +40,7 @@ function selectTemplate(src) {
 // Draw everything
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
   if (uploadedImg) {
     ctx.drawImage(
       uploadedImg,
@@ -48,42 +50,67 @@ function draw() {
       uploadedImg.height * imgScale
     );
   }
+
   if (frameImg) {
     ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
   }
 }
 
-// Dragging logic
+// Mouse drag events
 canvas.addEventListener("mousedown", (e) => {
+  if (!uploadedImg) return;
   isDragging = true;
-  startX = e.offsetX - imgX;
-  startY = e.offsetY - imgY;
+  lastX = e.clientX;
+  lastY = e.clientY;
+  canvas.style.cursor = "grabbing";
 });
+
 canvas.addEventListener("mousemove", (e) => {
   if (isDragging && uploadedImg) {
-    imgX = e.offsetX - startX;
-    imgY = e.offsetY - startY;
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
+    imgX += dx;
+    imgY += dy;
+    lastX = e.clientX;
+    lastY = e.clientY;
     draw();
   }
 });
-canvas.addEventListener("mouseup", () => { isDragging = false; });
-canvas.addEventListener("mouseleave", () => { isDragging = false; });
 
-// Zoom with mouse wheel
+canvas.addEventListener("mouseup", () => {
+  isDragging = false;
+  canvas.style.cursor = "grab";
+});
+
+canvas.addEventListener("mouseleave", () => {
+  isDragging = false;
+  canvas.style.cursor = "grab";
+});
+
+// Zoom with scroll
 canvas.addEventListener("wheel", (e) => {
   if (!uploadedImg) return;
   e.preventDefault();
 
   const zoomFactor = 0.1;
+  const mouseX = e.offsetX;
+  const mouseY = e.offsetY;
+
+  const prevScale = imgScale;
   if (e.deltaY < 0) {
-    imgScale *= (1 + zoomFactor);
+    imgScale *= 1 + zoomFactor;
   } else {
-    imgScale *= (1 - zoomFactor);
+    imgScale *= 1 - zoomFactor;
   }
+
+  // adjust position so zoom is centered on mouse
+  imgX -= (mouseX - imgX) * (imgScale / prevScale - 1);
+  imgY -= (mouseY - imgY) * (imgScale / prevScale - 1);
+
   draw();
 });
 
-// Download
+// Download final image
 function downloadImage() {
   const link = document.createElement("a");
   link.download = "framed_image.png";
