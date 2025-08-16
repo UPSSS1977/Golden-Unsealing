@@ -1,28 +1,142 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Frame Editor</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Photo Frame Editor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #f8f8f8;
+      user-select: none;
+      overflow-x: hidden;
+    }
+
+    h1 {
+      margin: 20px 0 10px;
+    }
+
+    #editor {
+      position: relative;
+      width: 90vw;
+      max-width: 500px;
+      aspect-ratio: 1 / 1;
+      background: #ddd;
+      overflow: hidden;
+      margin: 20px 0;
+      border: 2px solid #aaa;
+      border-radius: 12px;
+    }
+
+    #img-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(1) rotate(0deg);
+      cursor: grab;
+      touch-action: none; /* Important: prevent browser handling pinch/scroll */
+    }
+
+    #img-container:active {
+      cursor: grabbing;
+    }
+
+    #uploaded-img {
+      max-width: none; /* disable auto scaling */
+      max-height: none;
+      display: block;
+    }
+
+    #frame-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .controls input[type="file"] {
+      display: none;
+    }
+
+    .btn, label {
+      padding: 10px 15px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .btn:hover, label:hover {
+      background: #0056b3;
+    }
+
+    .templates {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .template {
+      width: 70px;
+      height: 70px;
+      object-fit: cover;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .template:hover {
+      border-color: #007bff;
+    }
+
+    #zoom {
+      width: 150px;
+    }
+  </style>
 </head>
 <body>
-  <h1>🖼️ Frame Editor</h1>
+  <h1>Photo Frame Editor</h1>
 
-  <div id="controls">
+  <div class="controls">
+    <label for="upload">Upload Photo</label>
     <input type="file" id="upload" accept="image/*">
-    <button onclick="downloadImage()">Download</button>
+    <button class="btn" id="rotate">Rotate</button>
+    <input type="range" id="zoom" min="0.2" max="5" step="0.1" value="1">
+    <button class="btn" id="download">Download</button>
+  </div>
+
+  <div class="templates">
+    <img src="frames/rumi.png" class="template" alt="Frame 1">
+    <img src="frames/mira.png" class="template" alt="Frame 2">
+    <img src="frames/zoey.png" class="template" alt="Frame 3">
+    <img src="frames/jinu.png" class="template" alt="Frame 4">
   </div>
 
   <div id="editor">
-    <canvas id="canvas" width="1080" height="1080"></canvas>
-  </div>
-
-  <div id="templates">
-    <p>Choose a Frame:</p>
-    <img src="frames/rumi.png" class="template" onclick="selectTemplate('frames/rumi.png')">
-    <img src="frames/mira.png" class="template" onclick="selectTemplate('frames/mira.png')">
-    <img src="frames/zoey.png" class="template" onclick="selectTemplate('frames/zoey.png')">
-    <img src="frames/jinu.png" class="template" onclick="selectTemplate('frames/jinu.png')">
+    <div id="img-container">
+      <img id="uploaded-img" src="" alt="">
+    </div>
+    <img id="frame-layer" src="" alt="Frame">
   </div>
 
   <script src="app.js"></script>
