@@ -1,50 +1,30 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Frame Editor</title>
-<link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>Frame Editor</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header><h1>Frame Editor</h1></header>
+  <h1>🖼️ Frame Editor</h1>
 
-  <main>
-    <section class="controls">
-      <label class="file-label">
-        <input id="upload" type="file" accept="image/*" />
-        <span>Choose image</span>
-      </label>
+  <div id="controls">
+    <input type="file" id="upload" accept="image/*">
+    <button onclick="downloadImage()">Download</button>
+  </div>
 
-      <div class="control-row">
-        <label>Zoom</label>
-        <input id="zoomSlider" type="range" min="20" max="300" value="100" />
-        <button id="rotateBtn" title="Rotate 90°">⟳ Rotate</button>
-        <button id="resetBtn">Reset</button>
-        <button id="downloadBtn">Download 1080×1080</button>
-      </div>
-    </section>
+  <div id="editor">
+    <canvas id="canvas" width="1080" height="1080"></canvas>
+  </div>
 
-    <section id="editor" aria-label="Frame editor" class="editor" >
-      <div id="imgContainer" class="img-container" >
-        <img id="userImage" alt="Uploaded image" draggable="false" />
-        <div id="resizer" class="resizer" aria-hidden="true"></div>
-      </div>
-      <img id="frameImage" class="frame-image" src="frames/rumi.png" alt="Frame overlay" />
-      <canvas id="exportCanvas" width="1080" height="1080" style="display:none"></canvas>
-    </section>
+  <div id="templates">
+    <p>Choose a Frame:</p>
+    <img src="frames/rumi.png" class="template" onclick="selectTemplate('frames/rumi.png')">
+    <img src="frames/mira.png" class="template" onclick="selectTemplate('frames/mira.png')">
+    <img src="frames/zoey.png" class="template" onclick="selectTemplate('frames/zoey.png')">
+    <img src="frames/jinu.png" class="template" onclick="selectTemplate('frames/jinu.png')">
+  </div>
 
-    <section class="templates">
-      <h2>Templates</h2>
-      <div class="thumbs">
-        <img class="template" data-src="frames/rumi.png" src="frames/rumi.png" alt="rumi" />
-        <img class="template" data-src="frames/mira.png" src="frames/mira.png" alt="mira" />
-        <img class="template" data-src="frames/zoey.png" src="frames/zoey.png" alt="zoey" />
-        <img class="template" data-src="frames/jinu.png" src="frames/jinu.png" alt="jinu" />
-      </div>
-    </section>
-  </main>
-
-<script src="app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
