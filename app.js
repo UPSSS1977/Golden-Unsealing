@@ -21,9 +21,7 @@ upload.addEventListener("change", (e) => {
     reader.onload = (event) => {
       uploadedImg.src = event.target.result;
       uploadedImg.onload = () => {
-        // auto-fit inside editor (1080x1080)
-        const maxW = 600;
-        const maxH = 600;
+        const maxW = 600, maxH = 600;
         let w = uploadedImg.naturalWidth;
         let h = uploadedImg.naturalHeight;
 
@@ -78,31 +76,60 @@ document.addEventListener("mouseup", () => {
   isDragging = false;
 });
 
-// ---------- Drag (mobile touch) ----------
+// ---------- Touch: drag + pinch zoom ----------
+let lastDistance = 0;
+
 imgContainer.addEventListener("touchstart", (e) => {
   if (e.touches.length === 1) {
+    // Single finger drag
     isDragging = true;
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
     initialX = imgContainer.offsetLeft;
     initialY = imgContainer.offsetTop;
+  } else if (e.touches.length === 2) {
+    // Pinch start
+    lastDistance = getDistance(e.touches[0], e.touches[1]);
   }
 });
 
 imgContainer.addEventListener("touchmove", (e) => {
+  e.preventDefault();
   if (isDragging && e.touches.length === 1) {
+    // Dragging
     const dx = e.touches[0].clientX - startX;
     const dy = e.touches[0].clientY - startY;
     imgContainer.style.left = initialX + dx + "px";
     imgContainer.style.top = initialY + dy + "px";
+  } else if (e.touches.length === 2) {
+    // Pinch zoom
+    const newDistance = getDistance(e.touches[0], e.touches[1]);
+    if (lastDistance) {
+      const delta = newDistance - lastDistance;
+      scale += delta * 0.005;
+      if (scale < 0.1) scale = 0.1;
+      if (scale > 5) scale = 5;
+      zoomSlider.value = scale;
+      updateTransform();
+    }
+    lastDistance = newDistance;
   }
-});
+}, { passive: false });
 
-imgContainer.addEventListener("touchend", () => {
+imgContainer.addEventListener("touchend", (e) => {
+  if (e.touches.length < 2) {
+    lastDistance = 0;
+  }
   isDragging = false;
 });
 
-// ---------- Zoom: slider (desktop & mobile) ----------
+function getDistance(t1, t2) {
+  const dx = t2.clientX - t1.clientX;
+  const dy = t2.clientY - t1.clientY;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+// ---------- Zoom: slider ----------
 zoomSlider.addEventListener("input", () => {
   scale = parseFloat(zoomSlider.value);
   updateTransform();
@@ -136,7 +163,6 @@ downloadBtn.addEventListener("click", () => {
   canvas.height = 1080;
   const ctx = canvas.getContext("2d");
 
-  // Draw uploaded image
   if (uploadedImg.src) {
     const rect = imgContainer.getBoundingClientRect();
     const editorRect = editor.getBoundingClientRect();
@@ -153,7 +179,6 @@ downloadBtn.addEventListener("click", () => {
     ctx.restore();
   }
 
-  // Draw frame
   if (frameImg.src) {
     ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
   }
