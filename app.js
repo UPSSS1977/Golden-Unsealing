@@ -8,8 +8,9 @@ const downloadBtn = document.getElementById("download-btn");
 
 let scale = 1, rotation = 0, translateX = 0, translateY = 0;
 let isDragging = false, lastX, lastY;
+let lastDist = 0;
 
-// Update preview
+// Update transform
 function updateTransform() {
   uploadedImg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale}) rotate(${rotation}deg)`;
 }
@@ -23,12 +24,10 @@ upload.addEventListener("change", e => {
     uploadedImg.src = ev.target.result;
     uploadedImg.style.display = "block";
     scale = 1; rotation = 0; translateX = 0; translateY = 0;
-
-    // Resize image to fit editor initially
     uploadedImg.onload = () => {
       const editorSize = document.getElementById("editor").offsetWidth;
       const maxDim = Math.max(uploadedImg.naturalWidth, uploadedImg.naturalHeight);
-      scale = editorSize / maxDim * 0.8; // 80% fit
+      scale = (editorSize / maxDim) * 0.8; // fit inside editor
       updateTransform();
     };
   };
@@ -39,30 +38,56 @@ upload.addEventListener("change", e => {
 function selectTemplate(src) { frameImg.src = src; }
 window.selectTemplate = selectTemplate;
 
-// Dragging desktop
-imgContainer.addEventListener("mousedown", e => { isDragging=true; lastX=e.clientX; lastY=e.clientY; e.preventDefault(); });
-window.addEventListener("mousemove", e => { if(!isDragging) return; translateX += e.clientX-lastX; translateY += e.clientY-lastY; lastX=e.clientX; lastY=e.clientY; updateTransform(); });
-window.addEventListener("mouseup", () => isDragging=false);
-
-// Dragging mobile
-imgContainer.addEventListener("touchstart", e => { if(e.touches.length===1){ isDragging=true; lastX=e.touches[0].clientX; lastY=e.touches[0].clientY; } }, {passive:false});
-imgContainer.addEventListener("touchmove", e => { if(!isDragging || e.touches.length!==1) return; e.preventDefault(); translateX += e.touches[0].clientX-lastX; translateY += e.touches[0].clientY-lastY; lastX=e.touches[0].clientX; lastY=e.touches[0].clientY; updateTransform(); }, {passive:false});
-imgContainer.addEventListener("touchend", () => isDragging=false);
+// Rotate
+rotateBtn.addEventListener("click", ()=>{ rotation=(rotation+90)%360; updateTransform(); });
 
 // Zoom slider
 zoomSlider.addEventListener("input", e => { scale *= parseFloat(e.target.value); zoomSlider.value=1; updateTransform(); });
 
-// Zoom mouse wheel
-document.getElementById("editor").addEventListener("wheel", e => { e.preventDefault(); scale += e.deltaY*-0.001; if(scale<0.01) scale=0.01; updateTransform(); }, {passive:false});
+// Mouse wheel zoom
+document.getElementById("editor").addEventListener("wheel", e => {
+  e.preventDefault();
+  scale += e.deltaY * -0.001;
+  if(scale<0.01) scale=0.01;
+  updateTransform();
+}, {passive:false});
 
-// Rotate
-rotateBtn.addEventListener("click", ()=>{ rotation=(rotation+90)%360; updateTransform(); });
+// Desktop drag
+imgContainer.addEventListener("mousedown", e => { isDragging=true; lastX=e.clientX; lastY=e.clientY; e.preventDefault(); });
+window.addEventListener("mousemove", e => { if(!isDragging) return; translateX += e.clientX-lastX; translateY += e.clientY-lastY; lastX=e.clientX; lastY=e.clientY; updateTransform(); });
+window.addEventListener("mouseup", ()=>isDragging=false);
+
+// Mobile drag & pinch
+imgContainer.addEventListener("touchstart", e => {
+  if(e.touches.length===1){ isDragging=true; lastX=e.touches[0].clientX; lastY=e.touches[0].clientY; }
+  if(e.touches.length===2){ lastDist = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY); }
+}, {passive:false});
+
+imgContainer.addEventListener("touchmove", e => {
+  e.preventDefault();
+  if(e.touches.length===1 && isDragging){
+    translateX += e.touches[0].clientX-lastX;
+    translateY += e.touches[0].clientY-lastY;
+    lastX = e.touches[0].clientX;
+    lastY = e.touches[0].clientY;
+    updateTransform();
+  } else if(e.touches.length===2){
+    const dist = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+    const zoomFactor = dist / lastDist;
+    scale *= zoomFactor;
+    lastDist = dist;
+    updateTransform();
+  }
+}, {passive:false});
+
+imgContainer.addEventListener("touchend", e => { if(e.touches.length<2) lastDist=0; if(e.touches.length===0) isDragging=false; });
 
 // Download
 downloadBtn.addEventListener("click", () => {
   const canvas=document.createElement("canvas");
   canvas.width=1080; canvas.height=1080;
   const ctx=canvas.getContext("2d");
+
   if(uploadedImg.src){
     const img=new Image();
     img.crossOrigin="anonymous"; img.src=uploadedImg.src;
@@ -73,13 +98,16 @@ downloadBtn.addEventListener("click", () => {
       ctx.scale(scale, scale);
       ctx.drawImage(img, -img.width/2, -img.height/2);
       ctx.restore();
+
       if(frameImg.src){
         const frame=new Image();
         frame.crossOrigin="anonymous"; frame.src=frameImg.src;
         frame.onload=()=>{
           ctx.drawImage(frame,0,0,canvas.width,canvas.height);
-          const link=document.createElement("a"); link.download="framed-image.png";
-          link.href=canvas.toDataURL("image/png"); link.click();
+          const link=document.createElement("a");
+          link.download="framed-image.png";
+          link.href=canvas.toDataURL("image/png");
+          link.click();
         };
       }
     };
